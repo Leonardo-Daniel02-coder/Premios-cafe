@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de Premios NFC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FDF9EE; 
+            --primary: #0A2E6B;  
+            --accent: #5C3A21;   
+            --dark: #2C3E50;
+            --white: #FFFFFF;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            /* Agregamos un ligero degradado para darle profundidad y que no se vea plano */
+            background: radial-gradient(circle at top, var(--white) 0%, #FDF9EE 100%);
+            color: var(--dark);
+            font-family: 'Montserrat', sans-serif;
+            display: flex; flex-direction: column; 
+            min-height: 100vh; overflow: hidden;
+        }
+
+        /* Contenedor central para alinear las pantallas */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            width: 100%;
+        }
+
+        /* --- UI EXTRA: Logo y Redes --- */
+        .logo-img {
+            width: 100px; height: 100px;
+            object-fit: contain; margin-bottom: 15px;
+            /* Puedes quitar el border-radius si tu logo es cuadrado */
+            border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .footer-social {
+            padding: 20px; text-align: center;
+            background-color: transparent;
+        }
+        .footer-social p {
+            font-size: 12px; font-weight: 600; color: var(--primary);
+            margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .footer-social img {
+            width: 35px; cursor: pointer; transition: transform 0.3s;
+        }
+        .footer-social img:hover { transform: scale(1.1); }
+
+        /* --- PANTALLA 1: FORMULARIO --- */
+        #pantalla-1 { width: 90%; max-width: 350px; transition: opacity 0.5s; text-align: center;}
+        
+        h1 { color: var(--primary); font-weight: 800; font-size: 28px; margin-bottom: 5px; }
+        p.subtitle { color: var(--accent); font-size: 14px; margin-bottom: 30px; font-weight: 600;}
+
+        input {
+            width: 100%; box-sizing: border-box;
+            background: var(--white); border: 2px solid #ddd; border-radius: 10px;
+            padding: 12px; margin-bottom: 15px; font-size: 16px; font-family: inherit;
+            outline: none; transition: border 0.3s; text-align: center;
+        }
+        input:focus { border: 2px solid var(--primary); }
+
+        button {
+            width: 100%; background-color: var(--primary); color: var(--white);
+            border: none; border-radius: 10px; padding: 15px; font-size: 16px;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(10,46,107,0.3);
+        }
+        button:active { transform: scale(0.95); }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; box-shadow: none; }
+
+        #error-msg { color: #e74c3c; font-size: 12px; margin-top: 10px; min-height: 15px; font-weight: 600;}
+
+        /* --- PANTALLA 2: TARJETAS 3D --- */
+        #pantalla-2 { display: none; width: 100%; max-width: 400px; text-align: center;}
+        
+        .saludo { font-size: 22px; font-weight: 600; margin-bottom: 20px; color: var(--accent);}
+        .saludo span { color: var(--primary); }
+
+        .cards-wrapper { display: flex; justify-content: center; gap: 15px; margin-top: 30px; perspective: 1000px; }
+
+        .card-container {
+            width: 110px; height: 150px; cursor: pointer;
+            position: relative; transition: all 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 12px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1); box-sizing: border-box;
+        }
+
+        .card-front {
+            background-image: url('img/reverso1.jpg');
+            background-size: cover; background-position: center; border: 2px solid var(--primary);
+        }
+
+        .card-back {
+            background-image: url('img/frente.jpeg');
+            background-size: cover; background-position: center; color: var(--dark);
+            transform: rotateY(180deg); border: 2px solid var(--primary); text-align: center; padding: 10px; word-wrap: break-word;
+        }
+
+        .premio-texto { font-size: 14px; font-weight: 800; color: #FDF9EE; background-color: var(--primary); padding: 5px; border-radius: 5px;}
+        
+        .card-container.flipped { transform: rotateY(180deg) scale(1.3); z-index: 10; }
+        .card-container.hidden { opacity: 0; transform: scale(0.5); pointer-events: none; }
+
+        #post-premio { display: none; margin-top: 40px; animation: fadeIn 1s; }
+        .codigo-val { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin: 10px 0; background: #fff; padding: 5px; border-radius: 5px; border: 1px dashed var(--primary);}
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <!-- PANTALLA 1 -->
+        <div id="pantalla-1">
+            <!-- REEMPLAZA ESTA IMAGEN POR EL LOGO DEL CAFÉ -->
+            <img src="img/logo.jpg" alt="Logo Café" class="logo-img" onerror="this.style.display='none'">
+            
+            <h1>Café Central</h1>
+            <p class="subtitle">Ingresa tu ticket y gana al instante</p>
+
+            <input type="text" id="nombreCliente" placeholder="¿Cuál es tu nombre?" autocomplete="off">
+            <input type="text" id="numeroTicket" placeholder="Número de Ticket" autocomplete="off">
+
+            <button id="btnJugar" onclick="iniciarJuego()">Probar mi Suerte</button>
+            <div id="error-msg"></div>
+        </div>
+
+        <!-- PANTALLA 2 -->
+        <div id="pantalla-2">
+            <div class="saludo">¡Hola, <span id="nombre-display"></span>!</div>
+            <p class="subtitle">Toca una tarjeta para revelar tu premio.</p>
+
+            <div class="cards-wrapper" id="zona-tarjetas">
+                <div class="card-container" onclick="seleccionarTarjeta(this)">
+                    <div class="card-front"></div>
+                    <div class="card-back"><span class="premio-texto"></span></div>
+                </div>
+                <div class="card-container" onclick="seleccionarTarjeta(this)">
+                    <div class="card-front"></div>
+                    <div class="card-back"><span class="premio-texto"></span></div>
+                </div>
+                <div class="card-container" onclick="seleccionarTarjeta(this)">
+                    <div class="card-front"></div>
+                    <div class="card-back"><span class="premio-texto"></span></div>
+                </div>
+            </div>
+
+            <div id="post-premio">
+                <p style="font-size: 12px; color: var(--accent); margin-bottom: 5px;">Muestra este código en caja:</p>
+                <!-- Aquí se inyecta el código generado -->
+                <div class="codigo-val" id="codigo-pantalla">----</div>
+                <button onclick="location.reload()" style="background-color: var(--accent); padding: 10px; margin-top: 10px;">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER REDES SOCIALES -->
+    <div class="footer-social">
+        <p>Síguenos en nuestras redes</p>
+        <!-- REEMPLAZA ESTA IMAGEN POR EL LOGO DE INSTAGRAM U OTRA RED -->
+        <img src="img/social.png" alt="Instagram" onclick="window.location.href='https://instagram.com'" onerror="this.style.display='none'">
+    </div>
+
+    <script>
+        // === TU ENDPOINT ===
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmlqjrrqqYW5KiG8WrDFrQXnDoWwRsL-BEzGAQifl1txnZ60CWLrG3O_wi45xWaWmSmQ/exec"; 
+        let ticketActual = "";
+        let juegoTerminado = false;
+        let codigoGenerado = "";
+
+        const premios = [
+            { texto: "20% DESC EN CUENTA", peso: 10, tipo: "Descuento" }, 
+            { texto: "GALLETA GRATIS", peso: 20, tipo: "Regalo" },        
+            { texto: "10% EN BEBIDAS", peso: 30, tipo: "Descuento" },     
+            { texto: "SIGUE PARTICIPANDO", peso: 40, tipo: "Ninguno" }    
+        ];
+
+        // Función para generar un código alfanumérico de 4 caracteres
+        function generarCodigo() {
+            const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let resultado = '';
+            for (let i = 0; i < 4; i++) {
+                resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            return resultado;
+        }
+
+        async function iniciarJuego() {
+            let nombreCrudo = document.getElementById('nombreCliente').value.trim();
+            const ticket = document.getElementById('numeroTicket').value.trim();
+            const btn = document.getElementById('btnJugar');
+            const errorMsg = document.getElementById('error-msg');
+
+            if(!nombreCrudo || !ticket) {
+                errorMsg.innerText = "Llena ambos campos para jugar."; return;
+            }
+
+            // ESCUDO ANTI-RECARGA LOCAL: Bloquea intentos repetidos desde el mismo celular al instante
+            if(localStorage.getItem("tkt_" + ticket)) {
+                errorMsg.innerText = "Ya utilizaste este ticket en este dispositivo."; return;
+            }
+
+            const nombre = nombreCrudo.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()).join(' ');
+
+            btn.innerText = "Verificando..."; btn.disabled = true; errorMsg.innerText = "";
+
+            try {
+                const respuesta = await fetch(`${SCRIPT_URL}?ticket=${encodeURIComponent(ticket)}`);
+                const data = await respuesta.json();
+
+                if(data.usado) {
+                    errorMsg.innerText = "Este ticket ya jugó anteriormente en el sistema.";
+                } else {
+                    ticketActual = ticket;
+                    document.getElementById('pantalla-1').style.opacity = 0;
+                    setTimeout(() => {
+                        document.getElementById('pantalla-1').style.display = "none";
+                        document.getElementById('nombre-display').innerText = nombre;
+                        document.getElementById('pantalla-2').style.display = "block";
+                    }, 500);
+                }
+            } catch(e) {
+                errorMsg.innerText = "Error de conexión. Intenta de nuevo.";
+            } finally {
+                btn.innerText = "Probar mi Suerte"; btn.disabled = false;
+            }
+        }
+
+        function seleccionarTarjeta(tarjetaElegida) {
+            if(juegoTerminado) return; 
+            juegoTerminado = true;
+
+            let rand = Math.random() * 100;
+            let suma = 0;
+            let premioGanado = premios[0];
+
+            for(let p of premios) {
+                suma += p.peso;
+                if(rand <= suma) {
+                    premioGanado = p;
+                    break;
+                }
+            }
+
+            // Inyectar premio y generar código único
+            tarjetaElegida.querySelector('.premio-texto').innerText = premioGanado.texto;
+            codigoGenerado = generarCodigo();
+            document.getElementById('codigo-pantalla').innerText = codigoGenerado;
+
+            // Guardar en Base de Datos y activar el escudo local
+            guardarPremioEnBaseDeDatos(premioGanado, codigoGenerado);
+            localStorage.setItem("tkt_" + ticketActual, "usado");
+
+            const todasLasTarjetas = document.querySelectorAll('.card-container');
+            todasLasTarjetas.forEach(t => {
+                if(t !== tarjetaElegida) t.classList.add('hidden'); 
+                else t.classList.add('flipped'); 
+            });
+
+            setTimeout(() => {
+                document.getElementById('post-premio').style.display = "block";
+            }, 800);
+        }
+
+        function guardarPremioEnBaseDeDatos(premio, codigo) {
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: "insert",
+                    ticket_asociado: ticketActual,
+                    premio_obtenido: premio.texto,
+                    tipo_premio: premio.tipo,
+                    codigo_validacion: codigo,  // AHORA SÍ ENVIAMOS EL CÓDIGO
+                    estado: "Pendiente"
+                })
+            }).then(res => console.log("Guardado exitosamente"))
+              .catch(err => console.error("Error", err));
+        }
+    </script>
+</body>
+</html>

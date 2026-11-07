@@ -16,7 +16,6 @@
 
         body {
             margin: 0; padding: 0;
-            /* Agregamos un ligero degradado para darle profundidad y que no se vea plano */
             background: radial-gradient(circle at top, var(--white) 0%, #FDF9EE 100%);
             color: var(--dark);
             font-family: 'Montserrat', sans-serif;
@@ -24,18 +23,15 @@
             min-height: 100vh; overflow: hidden;
         }
 
-        /* Contenedor central para alinear las pantallas */
         .main-content {
             flex: 1; display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             width: 100%;
         }
 
-        /* --- UI EXTRA: Logo y Redes --- */
         .logo-img {
             width: 100px; height: 100px;
             object-fit: contain; margin-bottom: 15px;
-            /* Puedes quitar el border-radius si tu logo es cuadrado */
             border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
@@ -108,7 +104,7 @@
             transform: rotateY(180deg); border: 2px solid var(--primary); text-align: center; padding: 10px; word-wrap: break-word;
         }
 
-        .premio-texto { font-size: 14px; font-weight: 800; color: #FDF9EE; background-color: var(--primary); padding: 5px; border-radius: 5px;}
+        .premio-texto { font-size: 13px; font-weight: 800; color: #FDF9EE; background-color: var(--primary); padding: 5px; border-radius: 5px;}
         
         .card-container.flipped { transform: rotateY(180deg) scale(1.3); z-index: 10; }
         .card-container.hidden { opacity: 0; transform: scale(0.5); pointer-events: none; }
@@ -124,17 +120,19 @@
     <div class="main-content">
         <!-- PANTALLA 1 -->
         <div id="pantalla-1">
-            <!-- REEMPLAZA ESTA IMAGEN POR EL LOGO DEL CAFÉ -->
             <img src="img/logo.jpg" alt="Logo Café" class="logo-img" onerror="this.style.display='none'">
             
             <h1>Café Central</h1>
             <p class="subtitle">Ingresa tu ticket y gana al instante</p>
 
-            <input type="text" id="nombreCliente" placeholder="¿Cuál es tu nombre?" autocomplete="off">
-            <input type="text" id="numeroTicket" placeholder="Número de Ticket" autocomplete="off">
-
-            <button id="btnJugar" onclick="iniciarJuego()">Probar mi Suerte</button>
-            <div id="error-msg"></div>
+            <div class="input-group">
+                <input type="text" id="nombre" placeholder="Tu Nombre" autocomplete="off" required>
+                <input type="text" id="ticket" placeholder="Folio del Ticket (Ej. CRES-001)" autocomplete="off" required>
+                <input type="number" id="monto" placeholder="Total pagado (Ej. 150.50)" step="0.01" required>
+            </div>
+            
+            <button id="btn-jugar" onclick="iniciarJuego()">¡GIRAR RULETA!</button>
+            <p id="error-msg" class="error"></p>
         </div>
 
         <!-- PANTALLA 2 -->
@@ -157,11 +155,9 @@
                 </div>
             </div>
 
+            <!-- SECCIÓN DINÁMICA DE ÉXITO O FRACASO -->
             <div id="post-premio">
-                <p style="font-size: 12px; color: var(--accent); margin-bottom: 5px;">Muestra este código en caja:</p>
-                <!-- Aquí se inyecta el código generado -->
-                <div class="codigo-val" id="codigo-pantalla">----</div>
-                <button onclick="location.reload()" style="background-color: var(--accent); padding: 10px; margin-top: 10px;">Finalizar</button>
+                <!-- Se llena con JS dependiendo si ganó o perdió -->
             </div>
         </div>
     </div>
@@ -169,25 +165,27 @@
     <!-- FOOTER REDES SOCIALES -->
     <div class="footer-social">
         <p>Síguenos en nuestras redes</p>
-        <!-- REEMPLAZA ESTA IMAGEN POR EL LOGO DE INSTAGRAM U OTRA RED -->
         <img src="img/social.png" alt="Instagram" onclick="window.location.href='https://instagram.com'" onerror="this.style.display='none'">
     </div>
 
     <script>
-        // === TU ENDPOINT ===
+        // === ENDPOINT GLOBAL ===
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmlqjrrqqYW5KiG8WrDFrQXnDoWwRsL-BEzGAQifl1txnZ60CWLrG3O_wi45xWaWmSmQ/exec"; 
+        
         let ticketActual = "";
+        let nombreActual = "";
+        let montoActual = 0;
         let juegoTerminado = false;
-        let codigoGenerado = "";
 
+        // Se agregó el premio de Instagram y se ajustaron los pesos para sumar 100
         const premios = [
             { texto: "20% DESC EN CUENTA", peso: 10, tipo: "Descuento" }, 
-            { texto: "GALLETA GRATIS", peso: 20, tipo: "Regalo" },        
-            { texto: "10% EN BEBIDAS", peso: 30, tipo: "Descuento" },     
+            { texto: "20% DESC (HISTORIA INSTA)", peso: 15, tipo: "Descuento" }, 
+            { texto: "GALLETA GRATIS", peso: 15, tipo: "Regalo" },        
+            { texto: "10% EN BEBIDAS", peso: 20, tipo: "Descuento" },     
             { texto: "SIGUE PARTICIPANDO", peso: 40, tipo: "Ninguno" }    
         ];
 
-        // Función para generar un código alfanumérico de 4 caracteres
         function generarCodigo() {
             const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let resultado = '';
@@ -198,43 +196,58 @@
         }
 
         async function iniciarJuego() {
-            let nombreCrudo = document.getElementById('nombreCliente').value.trim();
-            const ticket = document.getElementById('numeroTicket').value.trim();
-            const btn = document.getElementById('btnJugar');
+            const btn = document.getElementById('btn-jugar');
             const errorMsg = document.getElementById('error-msg');
+            
+            const nombre = document.getElementById('nombre').value.trim();
+            const ticket = document.getElementById('ticket').value.trim().toUpperCase();
+            const monto = document.getElementById('monto').value.trim(); 
 
-            if(!nombreCrudo || !ticket) {
-                errorMsg.innerText = "Llena ambos campos para jugar."; return;
+            errorMsg.innerText = "";
+
+            if (!nombre || !ticket || !monto) {
+                errorMsg.innerText = "Por favor, llena todos los campos.";
+                return;
+            }
+            
+            if (!ticket.startsWith("CRES-")) {
+                errorMsg.innerText = "El ticket es inválido. Debe incluir el prefijo (Ej. CRES-001)";
+                return;
             }
 
-            // ESCUDO ANTI-RECARGA LOCAL: Bloquea intentos repetidos desde el mismo celular al instante
-            if(localStorage.getItem("tkt_" + ticket)) {
-                errorMsg.innerText = "Ya utilizaste este ticket en este dispositivo."; return;
+            if (parseFloat(monto) <= 0) {
+                errorMsg.innerText = "Ingresa un monto válido.";
+                return;
             }
 
-            const nombre = nombreCrudo.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()).join(' ');
-
-            btn.innerText = "Verificando..."; btn.disabled = true; errorMsg.innerText = "";
+            btn.disabled = true;
+            btn.innerText = "Verificando...";
 
             try {
-                const respuesta = await fetch(`${SCRIPT_URL}?ticket=${encodeURIComponent(ticket)}`);
-                const data = await respuesta.json();
+                // 1. Verificar en Base de Datos si el ticket ya jugó
+                const response = await fetch(SCRIPT_URL + "?ticket=" + encodeURIComponent(ticket));
+                const data = await response.json();
 
-                if(data.usado) {
-                    errorMsg.innerText = "Este ticket ya jugó anteriormente en el sistema.";
-                } else {
-                    ticketActual = ticket;
-                    document.getElementById('pantalla-1').style.opacity = 0;
-                    setTimeout(() => {
-                        document.getElementById('pantalla-1').style.display = "none";
-                        document.getElementById('nombre-display').innerText = nombre;
-                        document.getElementById('pantalla-2').style.display = "block";
-                    }, 500);
+                if (data.usado) {
+                    errorMsg.innerText = "Este ticket ya fue utilizado.";
+                    btn.disabled = false;
+                    btn.innerText = "¡GIRAR RULETA!";
+                    return;
                 }
-            } catch(e) {
-                errorMsg.innerText = "Error de conexión. Intenta de nuevo.";
-            } finally {
-                btn.innerText = "Probar mi Suerte"; btn.disabled = false;
+
+                // 2. Si es válido, guardar los datos en memoria y pasar a Pantalla 2
+                ticketActual = ticket;
+                nombreActual = nombre;
+                montoActual = parseFloat(monto);
+
+                document.getElementById('pantalla-1').style.display = 'none';
+                document.getElementById('nombre-display').innerText = nombreActual;
+                document.getElementById('pantalla-2').style.display = 'block';
+
+            } catch (error) {
+                errorMsg.innerText = "Hubo un error de conexión. Intenta de nuevo.";
+                btn.disabled = false;
+                btn.innerText = "¡GIRAR RULETA!";
             }
         }
 
@@ -242,6 +255,7 @@
             if(juegoTerminado) return; 
             juegoTerminado = true;
 
+            // Determinar premio
             let rand = Math.random() * 100;
             let suma = 0;
             let premioGanado = premios[0];
@@ -254,15 +268,37 @@
                 }
             }
 
-            // Inyectar premio y generar código único
+            // Inyectar texto en la tarjeta volteada
             tarjetaElegida.querySelector('.premio-texto').innerText = premioGanado.texto;
-            codigoGenerado = generarCodigo();
-            document.getElementById('codigo-pantalla').innerText = codigoGenerado;
+            
+            let codigoGenerado = "N/A";
+            const divPostPremio = document.getElementById('post-premio');
 
-            // Guardar en Base de Datos y activar el escudo local
+            // RUTAS SEPARADAS: ¿Ganó o perdió?
+            if (premioGanado.tipo !== "Ninguno") {
+                codigoGenerado = generarCodigo();
+                divPostPremio.innerHTML = `
+                    <p style="font-size: 12px; color: var(--accent); margin-bottom: 5px;">Muestra este código en caja:</p>
+                    <div class="codigo-val" id="codigo-pantalla">${codigoGenerado}</div>
+                    <p style="font-size: 14px; color: #27ae60; font-weight: bold; margin-top: 15px; padding: 10px; border: 1px dashed #27ae60; background-color: #fff;">
+                        Paso 1: Ve con el cajero y díctale este código junto con el monto de tu compra para verificar y asociar tu premio.
+                    </p>
+                    <button onclick="location.reload()" style="background-color: var(--primary); padding: 15px; margin-top: 10px; border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; width: 100%;">Finalizar</button>
+                `;
+            } else {
+                // Ruta si obtiene "Sigue Participando"
+                divPostPremio.innerHTML = `
+                    <p style="font-size: 16px; color: var(--accent); margin-top: 15px; font-weight: bold;">
+                        ¡No ganaste esta vez! Pero te esperamos muy pronto.
+                    </p>
+                    <button onclick="location.reload()" style="background-color: var(--accent); padding: 15px; margin-top: 10px; border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer; width: 100%;">Terminar Juego</button>
+                `;
+            }
+
+            // Enviar datos al Backend
             guardarPremioEnBaseDeDatos(premioGanado, codigoGenerado);
-            localStorage.setItem("tkt_" + ticketActual, "usado");
 
+            // Efectos visuales de tarjetas
             const todasLasTarjetas = document.querySelectorAll('.card-container');
             todasLasTarjetas.forEach(t => {
                 if(t !== tarjetaElegida) t.classList.add('hidden'); 
@@ -270,7 +306,7 @@
             });
 
             setTimeout(() => {
-                document.getElementById('post-premio').style.display = "block";
+                divPostPremio.style.display = "block";
             }, 800);
         }
 
@@ -281,13 +317,14 @@
                 body: JSON.stringify({
                     action: "insert",
                     ticket_asociado: ticketActual,
+                    nombre_cliente: nombreActual,
+                    monto_cliente: montoActual,
                     premio_obtenido: premio.texto,
                     tipo_premio: premio.tipo,
-                    codigo_validacion: codigo,  // AHORA SÍ ENVIAMOS EL CÓDIGO
-                    estado: "Pendiente"
+                    codigo_validacion: codigo
                 })
             }).then(res => console.log("Guardado exitosamente"))
-              .catch(err => console.error("Error", err));
+              .catch(err => console.error("Error al guardar", err));
         }
     </script>
 </body>

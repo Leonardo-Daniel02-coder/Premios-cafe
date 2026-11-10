@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal del Cajero - Café Crescendo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0A2E6B;  
+            --dark: #2C3E50;
+            --white: #FFFFFF;
+            /* Colores de la UI Mutante */
+            --bg-neutro: #F3F4F6;
+            --bg-amarillo: #FFFBEB; /* Por verificar */
+            --bg-verde: #ECFDF5;    /* Canjeable */
+            --bg-rojo: #FEF2F2;     /* Cobrado/Error */
+            --color-btn: #3B82F6;
+        }
+
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-neutro);
+            color: var(--dark);
+            font-family: 'Montserrat', sans-serif;
+            transition: background-color 0.4s ease; /* Transición suave de colores */
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container {
+            width: 100%; max-width: 400px;
+            background: var(--white);
+            padding: 25px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        h2 { font-weight: 800; color: var(--primary); margin-top: 0; }
+
+        input, select {
+            width: 100%; box-sizing: border-box;
+            background: #F9FAFB; border: 2px solid #E5E7EB; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px; font-size: 16px; font-family: inherit;
+            outline: none; transition: border 0.3s; text-align: center; font-weight: 600;
+        }
+        input:focus, select:focus { border: 2px solid var(--color-btn); }
+        
+        input#codigo { text-transform: uppercase; letter-spacing: 2px; font-size: 20px;}
+
+        button {
+            width: 100%; color: var(--white); border: none; border-radius: 8px;
+            padding: 15px; font-size: 16px; font-weight: 800; cursor: pointer;
+            margin-bottom: 10px; transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.8; }
+        button:disabled { background-color: #9CA3AF !important; cursor: not-allowed; }
+
+        .btn-buscar { background-color: var(--primary); }
+        .btn-exito { background-color: #10B981; } /* Verde */
+        .btn-secundario { background-color: #F59E0B; } /* Amarillo/Naranja */
+        .btn-error { background-color: #EF4444; } /* Rojo */
+
+        /* Panel Dinámico Oculto por defecto */
+        #panel-resultados { display: none; margin-top: 20px; border-top: 2px dashed #E5E7EB; padding-top: 20px;}
+        
+        .info-premio { font-size: 18px; font-weight: 800; color: var(--primary); margin: 10px 0; background: #E0E7FF; padding: 10px; border-radius: 5px;}
+        .info-monto { font-size: 14px; color: #6B7280; margin-bottom: 20px; }
+        
+        #msg-sistema { font-size: 14px; font-weight: 600; margin-top: 10px; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Validación en Caja</h2>
+        
+        <input type="text" id="codigo" placeholder="Ej. AB12" autocomplete="off">
+        <button class="btn-buscar" id="btn-buscar" onclick="buscarCodigo()">Buscar Código</button>
+        <div id="msg-sistema"></div>
+
+        <!-- PANEL DINÁMICO QUE MUTA SEGÚN EL ESTADO -->
+        <div id="panel-resultados">
+            
+            <div class="info-premio" id="res-premio">Premio Aquí</div>
+            <div class="info-monto" id="res-monto-cliente">Monto declarado: $0.00</div>
+
+            <!-- Zona para Por Verificar (Amarillo) -->
+            <div id="zona-verificacion" style="display: none;">
+                <label style="font-size: 12px; font-weight:bold; color: #F59E0B;">Paso 1: Valida el ticket físico</label>
+                <input type="number" id="input-monto" placeholder="Monto real del ticket" step="0.01">
+                
+                <label style="font-size: 12px; font-weight:bold; color: #10B981; margin-top:10px; display:block;">Paso 2: ¿Desea cobrarlo hoy?</label>
+                <select id="input-producto-rapido">
+                    <option value="">(Solo si cobra hoy) Producto de venta cruzada...</option>
+                    <option value="Café Americano">Café Americano</option>
+                    <option value="Latte / Cappuccino">Latte / Cappuccino</option>
+                    <option value="Frappé">Frappé</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Ninguno">Ninguno</option>
+                </select>
+
+                <button class="btn-exito" id="btn-doble" onclick="procesar('verificar_y_cobrar')">Verificar y Entregar Premio AHORA</button>
+                <button class="btn-secundario" id="btn-solo-verificar" onclick="procesar('verificar')">Solo Verificar (Guardar para después)</button>
+            </div>
+
+            <!-- Zona para Canjeable (Verde) -->
+            <div id="zona-cobro" style="display: none;">
+                <p style="color: #10B981; font-weight: 800; font-size: 14px;">✓ Ticket ya validado anteriormente</p>
+                <select id="input-producto">
+                    <option value="">¿Qué producto compró hoy?...</option>
+                    <option value="Café Americano">Café Americano</option>
+                    <option value="Latte / Cappuccino">Latte / Cappuccino</option>
+                    <option value="Frappé">Frappé</option>
+                    <option value="Panadería">Panadería</option>
+                </select>
+                <button class="btn-exito" onclick="procesar('cobrar')">Entregar Premio Final</button>
+            </div>
+
+            <button class="btn-error" style="margin-top: 15px;" onclick="resetearUI()">Cancelar / Limpiar</button>
+        </div>
+    </div>
+
+    <script>
+        // === PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT ===
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmlqjrrqqYW5KiG8WrDFrQXnDoWwRsL-BEzGAQifl1txnZ60CWLrG3O_wi45xWaWmSmQ/exec"; 
+        
+        let filaActual = 0;
+        let estadoActual = "";
+
+        const inputCodigo = document.getElementById('codigo');
+        const msgSistema = document.getElementById('msg-sistema');
+        const btnBuscar = document.getElementById('btn-buscar');
+        const panelResultados = document.getElementById('panel-resultados');
+
+        // Para autoseleccionar la barra al cargar
+        window.onload = () => inputCodigo.focus();
+
+        async function buscarCodigo() {
+            const codigo = inputCodigo.value.trim().toUpperCase();
+            if(!codigo) return;
+
+            msgSistema.innerText = "Buscando...";
+            msgSistema.style.color = "#6B7280";
+            btnBuscar.disabled = true;
+            panelResultados.style.display = "none";
+            document.body.style.backgroundColor = "var(--bg-neutro)";
+
+            try {
+                const response = await fetch(SCRIPT_URL + "?codigo=" + encodeURIComponent(codigo));
+                const data = await response.json();
+
+                btnBuscar.disabled = false;
+                msgSistema.innerText = "";
+
+                if (!data.encontrado) {
+                    msgSistema.innerText = "Código no encontrado.";
+                    msgSistema.style.color = "#EF4444";
+                    document.body.style.backgroundColor = "var(--bg-rojo)";
+                    inputCodigo.focus();
+                    return;
+                }
+
+                // Guardar datos en memoria para usarlos al procesar
+                filaActual = data.fila;
+                estadoActual = data.estado;
+                
+                document.getElementById('res-premio').innerText = data.premio;
+                document.getElementById('res-monto-cliente').innerText = "Monto declarado: $" + parseFloat(data.monto_cliente).toFixed(2);
+                
+                panelResultados.style.display = "block";
+                
+                // === LÓGICA DE UI MUTANTE ===
+                document.getElementById('zona-verificacion').style.display = "none";
+                document.getElementById('zona-cobro').style.display = "none";
+
+                if (estadoActual === "Por Verificar") {
+                    document.body.style.backgroundColor = "var(--bg-amarillo)";
+                    document.getElementById('zona-verificacion').style.display = "block";
+                    document.getElementById('input-monto').focus(); // Auto-focus al monto
+                } 
+                else if (estadoActual === "Canjeable") {
+                    document.body.style.backgroundColor = "var(--bg-verde)";
+                    document.getElementById('res-monto-cliente').style.display = "none"; // Ya no importa
+                    document.getElementById('zona-cobro').style.display = "block";
+                } 
+                else if (estadoActual === "Cobrado") {
+                    document.body.style.backgroundColor = "var(--bg-rojo)";
+                    msgSistema.innerText = "❌ ERROR: Este premio YA fue entregado anteriormente.";
+                    msgSistema.style.color = "#EF4444";
+                    panelResultados.style.display = "none";
+                    inputCodigo.focus();
+                }
+
+            } catch(e) {
+                msgSistema.innerText = "Error de conexión.";
+                btnBuscar.disabled = false;
+            }
+        }
+
+        async function procesar(accionDeseada) {
+            let payload = {
+                action: accionDeseada,
+                fila: filaActual,
+                monto_cajero: "",
+                producto: ""
+            };
+
+            // Validar campos según la acción
+            if (accionDeseada === "verificar" || accionDeseada === "verificar_y_cobrar") {
+                const monto = document.getElementById('input-monto').value;
+                if(!monto || parseFloat(monto) <= 0) {
+                    alert("Debes ingresar el monto real del ticket para poder verificarlo.");
+                    return;
+                }
+                payload.monto_cajero = parseFloat(monto);
+            }
+
+            if (accionDeseada === "verificar_y_cobrar") {
+                const prod = document.getElementById('input-producto-rapido').value;
+                if(!prod) {
+                    alert("Si vas a entregar el premio, debes seleccionar qué producto llevó hoy.");
+                    return;
+                }
+                payload.producto = prod;
+            }
+
+            if (accionDeseada === "cobrar") {
+                const prod = document.getElementById('input-producto').value;
+                if(!prod) {
+                    alert("Selecciona el producto que compró hoy para acompañar su premio.");
+                    return;
+                }
+                payload.producto = prod;
+            }
+
+            // Enviar petición
+            msgSistema.innerText = "Guardando en sistema...";
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                alert("¡OPERACIÓN EXITOSA!");
+                resetearUI();
+            } catch(e) {
+                alert("Hubo un error al guardar. Revisa el internet.");
+            }
+        }
+
+        function resetearUI() {
+            inputCodigo.value = "";
+            document.getElementById('input-monto').value = "";
+            document.getElementById('input-producto').value = "";
+            document.getElementById('input-producto-rapido').value = "";
+            panelResultados.style.display = "none";
+            document.body.style.backgroundColor = "var(--bg-neutro)";
+            msgSistema.innerText = "";
+            inputCodigo.focus();
+        }
+    </script>
+</body>
+</html>

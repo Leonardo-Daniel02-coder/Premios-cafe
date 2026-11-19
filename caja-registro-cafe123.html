@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal del Cajero - Cafeteria</title>
+    <title>Portal del Cajero - Cafetería</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0A2E6B;  
             --dark: #2C3E50;
             --white: #FFFFFF;
-            /* Colores de la UI Mutante */
             --bg-neutro: #F3F4F6;
-            --bg-amarillo: #FFFBEB; /* Por verificar */
-            --bg-verde: #ECFDF5;    /* Canjeable */
-            --bg-rojo: #FEF2F2;     /* Cobrado/Error */
+            --bg-amarillo: #FFFBEB;
+            --bg-verde: #ECFDF5;
+            --bg-rojo: #FEF2F2;
             --color-btn: #3B82F6;
         }
 
@@ -23,7 +22,7 @@
             background-color: var(--bg-neutro);
             color: var(--dark);
             font-family: 'Montserrat', sans-serif;
-            transition: background-color 0.4s ease; /* Transición suave de colores */
+            transition: background-color 0.4s ease;
             display: flex; flex-direction: column; align-items: center;
         }
 
@@ -45,7 +44,7 @@
         }
         input:focus, select:focus { border: 2px solid var(--color-btn); }
         
-        input#codigo { text-transform: uppercase; letter-spacing: 2px; font-size: 20px;}
+        input#codigo { text-transform: uppercase; letter-spacing: 2px; font-size: 20px; }
 
         button {
             width: 100%; color: var(--white); border: none; border-radius: 8px;
@@ -56,14 +55,13 @@
         button:disabled { background-color: #9CA3AF !important; cursor: not-allowed; }
 
         .btn-buscar { background-color: var(--primary); }
-        .btn-exito { background-color: #10B981; } /* Verde */
-        .btn-secundario { background-color: #F59E0B; } /* Amarillo/Naranja */
-        .btn-error { background-color: #EF4444; } /* Rojo */
+        .btn-exito { background-color: #10B981; }
+        .btn-secundario { background-color: #F59E0B; }
+        .btn-error { background-color: #EF4444; }
 
-        /* Panel Dinámico Oculto por defecto */
-        #panel-resultados { display: none; margin-top: 20px; border-top: 2px dashed #E5E7EB; padding-top: 20px;}
+        #panel-resultados { display: none; margin-top: 20px; border-top: 2px dashed #E5E7EB; padding-top: 20px; }
         
-        .info-premio { font-size: 18px; font-weight: 800; color: var(--primary); margin: 10px 0; background: #E0E7FF; padding: 10px; border-radius: 5px;}
+        .info-premio { font-size: 18px; font-weight: 800; color: var(--primary); margin: 10px 0; background: #E0E7FF; padding: 10px; border-radius: 5px; }
         .info-monto { font-size: 14px; color: #6B7280; margin-bottom: 20px; }
         
         #msg-sistema { font-size: 14px; font-weight: 600; margin-top: 10px; min-height: 20px; }
@@ -113,7 +111,7 @@
                     <option value="Frappé">Frappé</option>
                     <option value="Panadería">Panadería</option>
                 </select>
-                <button class="btn-exito" onclick="procesar('cobrar')">Entregar Premio Final</button>
+                <button class="btn-exito" id="btn-cobrar-final" onclick="procesar('cobrar')">Entregar Premio Final</button>
             </div>
 
             <button class="btn-error" style="margin-top: 15px;" onclick="resetearUI()">Cancelar / Limpiar</button>
@@ -121,23 +119,20 @@
     </div>
 
     <script>
-        // === PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT ===
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmlqjrrqqYW5KiG8WrDFrQXnDoWwRsL-BEzGAQifl1txnZ60CWLrG3O_wi45xWaWmSmQ/exec"; 
         
         let filaActual = 0;
-        let estadoActual = "";
 
         const inputCodigo = document.getElementById('codigo');
         const msgSistema = document.getElementById('msg-sistema');
         const btnBuscar = document.getElementById('btn-buscar');
         const panelResultados = document.getElementById('panel-resultados');
 
-        // Para autoseleccionar la barra al cargar
         window.onload = () => inputCodigo.focus();
 
         async function buscarCodigo() {
             const codigo = inputCodigo.value.trim().toUpperCase();
-            if(!codigo) return;
+            if (!codigo) return;
 
             msgSistema.innerText = "Buscando...";
             msgSistema.style.color = "#6B7280";
@@ -160,39 +155,45 @@
                     return;
                 }
 
-                // Guardar datos en memoria para usarlos al procesar
                 filaActual = data.fila;
-                estadoActual = data.estado;
+                const estadoLimpio = String(data.estado || "").trim().toLowerCase();
                 
                 document.getElementById('res-premio').innerText = data.premio;
-                document.getElementById('res-monto-cliente').innerText = "Monto declarado: $" + parseFloat(data.monto_cliente).toFixed(2);
+                const montoDiv = document.getElementById('res-monto-cliente');
+                montoDiv.style.display = "block";
+                montoDiv.innerText = "Monto declarado: $" + (parseFloat(data.monto_cliente) || 0).toFixed(2);
                 
                 panelResultados.style.display = "block";
                 
-                // === LÓGICA DE UI MUTANTE ===
                 document.getElementById('zona-verificacion').style.display = "none";
                 document.getElementById('zona-cobro').style.display = "none";
 
-                if (estadoActual === "Por Verificar") {
+                if (estadoLimpio === "por verificar") {
                     document.body.style.backgroundColor = "var(--bg-amarillo)";
                     document.getElementById('zona-verificacion').style.display = "block";
-                    document.getElementById('input-monto').focus(); // Auto-focus al monto
+                    document.getElementById('input-monto').focus();
                 } 
-                else if (estadoActual === "Canjeable") {
+                else if (estadoLimpio === "canjeable") {
                     document.body.style.backgroundColor = "var(--bg-verde)";
-                    document.getElementById('res-monto-cliente').style.display = "none"; // Ya no importa
+                    montoDiv.style.display = "none";
                     document.getElementById('zona-cobro').style.display = "block";
                 } 
-                else if (estadoActual === "Cobrado") {
+                else if (estadoLimpio === "cobrado") {
                     document.body.style.backgroundColor = "var(--bg-rojo)";
                     msgSistema.innerText = "❌ ERROR: Este premio YA fue entregado anteriormente.";
                     msgSistema.style.color = "#EF4444";
                     panelResultados.style.display = "none";
                     inputCodigo.focus();
                 }
+                else {
+                    msgSistema.innerText = "Estado no reconocido en tabla: " + data.estado;
+                    msgSistema.style.color = "#EF4444";
+                    panelResultados.style.display = "none";
+                }
 
-            } catch(e) {
+            } catch (e) {
                 msgSistema.innerText = "Error de conexión.";
+                msgSistema.style.color = "#EF4444";
                 btnBuscar.disabled = false;
             }
         }
@@ -205,10 +206,9 @@
                 producto: ""
             };
 
-            // Validar campos según la acción
             if (accionDeseada === "verificar" || accionDeseada === "verificar_y_cobrar") {
                 const monto = document.getElementById('input-monto').value;
-                if(!monto || parseFloat(monto) <= 0) {
+                if (!monto || parseFloat(monto) <= 0) {
                     alert("Debes ingresar el monto real del ticket para poder verificarlo.");
                     return;
                 }
@@ -217,7 +217,7 @@
 
             if (accionDeseada === "verificar_y_cobrar") {
                 const prod = document.getElementById('input-producto-rapido').value;
-                if(!prod) {
+                if (!prod) {
                     alert("Si vas a entregar el premio, debes seleccionar qué producto llevó hoy.");
                     return;
                 }
@@ -226,15 +226,16 @@
 
             if (accionDeseada === "cobrar") {
                 const prod = document.getElementById('input-producto').value;
-                if(!prod) {
+                if (!prod) {
                     alert("Selecciona el producto que compró hoy para acompañar su premio.");
                     return;
                 }
                 payload.producto = prod;
             }
 
-            // Enviar petición
             msgSistema.innerText = "Guardando en sistema...";
+            msgSistema.style.color = "#6B7280";
+
             try {
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
@@ -244,8 +245,9 @@
                 
                 alert("¡OPERACIÓN EXITOSA!");
                 resetearUI();
-            } catch(e) {
+            } catch (e) {
                 alert("Hubo un error al guardar. Revisa el internet.");
+                msgSistema.innerText = "";
             }
         }
 
@@ -262,6 +264,3 @@
     </script>
 </body>
 </html>
-
-
-

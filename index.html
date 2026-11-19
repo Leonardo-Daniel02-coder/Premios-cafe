@@ -113,6 +113,99 @@
         .codigo-val { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin: 10px 0; background: #fff; padding: 5px; border-radius: 5px; border: 1px dashed var(--primary);}
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Enlace discreto terminos y condiciones debajo de redes sociales */
+.link-legal {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #6B7280;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.link-legal:hover {
+    color: #0A2E6B;
+}
+
+/* Fondo oscuro y ventana emergente (Modal) */
+.modal-legal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.modal-legal-box {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 420px;
+    max-height: 82vh;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.modal-legal-scroll {
+    overflow-y: auto;
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #374151;
+    padding-right: 8px;
+}
+
+.modal-legal-scroll h3 {
+    color: #0A2E6B;
+    font-size: 14px;
+    margin: 15px 0 8px 0;
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 4px;
+}
+.modal-legal-scroll h3:first-child {
+    margin-top: 0;
+}
+
+.modal-legal-scroll h4 {
+    color: #1F2937;
+    font-size: 12.5px;
+    margin: 10px 0 4px 0;
+}
+
+.modal-legal-scroll p {
+    margin: 0 0 8px 0;
+}
+
+.modal-legal-scroll ul {
+    margin: 0 0 10px 0;
+    padding-left: 18px;
+}
+
+.modal-legal-scroll li {
+    margin-bottom: 4px;
+}
+
+.btn-cerrar-legal {
+    margin-top: 15px;
+    width: 100%;
+    background-color: #0A2E6B;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+}
     </style>
 </head>
 <body>
@@ -167,6 +260,10 @@
         <p>Síguenos en nuestras redes</p>
         <img src="img/social.png" alt="Instagram" onclick="window.location.href='https://instagram.com'" onerror="this.style.display='none'">
     </div>
+    <!-- FOOTER terminos y condiciones -->
+    <div style="text-align: center;">
+    <a href="javascript:void(0)" class="link-legal" onclick="abrirModalLegal()">Términos y condiciones</a>
+</div>
 
     <script>
         // === ENDPOINT GLOBAL ===
@@ -326,6 +423,66 @@
             }).then(res => console.log("Guardado exitosamente"))
               .catch(err => console.error("Error al guardar", err));
         }
+    
+        function abrirModalLegal() {
+    document.getElementById('modal-legal').style.display = 'flex';
+}
+
+function cerrarModalLegal() {
+    document.getElementById('modal-legal').style.display = 'none';
+}
+
     </script>
+    <!-- MODAL DE TÉRMINOS Y CONDICIONES Y AVISO DE PRIVACIDAD -->
+<div id="modal-legal" class="modal-legal-overlay" onclick="if(event.target === this) cerrarModalLegal()">
+    <div class="modal-legal-box">
+        <div class="modal-legal-scroll">
+            <h3>AVISO DE PRIVACIDAD SIMPLIFICADO</h3>
+            
+            <h4>Identidad y Domicilio del Responsable</h4>
+            <p>Café Crescendo (en adelante "El Establecimiento"), con domicilio en Monterrey, Nuevo León, es el responsable del uso y protección de sus datos personales. El proveedor tecnológico del sistema actúa únicamente como encargado del procesamiento técnico de la información.</p>
+
+            <h4>Datos Personales Sometidos a Tratamiento</h4>
+            <p>Para participar en la dinámica de recompensas, recabaremos un único dato personal: Nombre de pila o seudónimo. No se recabarán datos sensibles, correos electrónicos, teléfonos ni información financiera.</p>
+
+            <h4>Finalidad del Tratamiento de Datos</h4>
+            <p>El nombre proporcionado será utilizado exclusivamente para las siguientes finalidades primarias:</p>
+            <ul>
+                <li>Mostrar un saludo personalizado en la pantalla de la interfaz interactiva durante su participación.</li>
+                <li>Llevar un registro estadístico de uso en nuestra base de datos interna (alojada de forma segura en la nube) para el control de entrega de premios.</li>
+                <li>El Establecimiento no utilizará su información para envío de publicidad externa (spam) ni comercializará su dato con terceros.</li>
+            </ul>
+
+            <h4>Derechos ARCO</h4>
+            <p>Usted tiene derecho a conocer qué datos personales tenemos de usted, para qué los utilizamos y las condiciones del uso que les damos (Acceso). Asimismo, es su derecho solicitar la corrección de su información personal en caso de que esté desactualizada, sea inexacta o incompleta (Rectificación); que la eliminemos de nuestros registros o bases de datos cuando considere que la misma no está siendo utilizada adecuadamente (Cancelación); así como oponerse al uso de sus datos personales para fines específicos (Oposición). Para el ejercicio de cualquiera de los derechos ARCO, puede presentar su solicitud directamente en el mostrador de Café Crescendo.</p>
+
+            <h3>TÉRMINOS Y CONDICIONES DE LA DINÁMICA DE RECOMPENSAS</h3>
+
+            <h4>1. Dinámica de Participación</h4>
+            <p>El acceso al juego interactivo de tarjetas 3D es exclusivo para clientes de Café Crescendo que cuenten con un ticket de compra válido y verificado en caja. El sistema asignará las recompensas de forma aleatoria mediante un algoritmo de probabilidades ponderadas preestablecido por la administración.</p>
+
+            <h4>2. Redención de Recompensas</h4>
+            <ul>
+                <li>Las recompensas (descuentos, productos gratis, etc.) son válidas únicamente para la compra actual o la visita indicada por el cajero, según el tipo de premio.</li>
+                <li>Los premios no son canjeables por dinero en efectivo bajo ninguna circunstancia.</li>
+                <li>Todas las recompensas físicas (ej. galletas, bebidas) están sujetas a la disponibilidad de inventario en la sucursal al momento de ganar.</li>
+            </ul>
+
+            <h4>3. Cancelación por Malas Prácticas y Fraude</h4>
+            <p>Café Crescendo se reserva el derecho absoluto e inapelable de cancelar, anular o suspender cualquier promoción, descuento o premio en caso de detectar:</p>
+            <ul>
+                <li>Intentos de manipulación del software, la interfaz web o las etiquetas NFC/QR.</li>
+                <li>Uso de tickets de compra falsos, duplicados, o previamente cobrados.</li>
+                <li>Prácticas fraudulentas, suplantación de identidad o cualquier vulneración a los protocolos de seguridad del sistema.</li>
+                <li>En caso de detectar un comportamiento fraudulento, el participante perderá automáticamente el derecho a cualquier beneficio presente o futuro dentro del programa de lealtad.</li>
+            </ul>
+
+            <h4>4. Modificaciones</h4>
+            <p>El Establecimiento se reserva el derecho de modificar los porcentajes de probabilidad, los premios ofrecidos y las reglas de la dinámica en cualquier momento y sin previo aviso, entrando en vigor en el momento de su actualización en el sistema.</p>
+        </div>
+
+        <button type="button" class="btn-cerrar-legal" onclick="cerrarModalLegal()">Entendido</button>
+    </div>
+</div>
 </body>
 </html>
